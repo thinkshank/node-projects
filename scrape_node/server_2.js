@@ -17,23 +17,51 @@ var couch_header =
     'Content-Type' : 'application/json'
 }
 
-
-request({
-    	headers : {
-    		'Content-Type' : 'application/json'
-    	},
-    	uri : 'http://127.0.0.1:5984/test/87faa29914250597eee456911c001e24',
-    	method : 'GET'
-    }, function(err, res, body){
-    	console.log(body);
-    	var data = JSON.parse(body).data;
-    	data.map(function(entry){
-    		console.log(entry.category_id);
-    		fetchCategoryArticles(entry.category_id);
-    	});
-    });
+var z_header = 
+{
+    'Content-Type' : 'application/json', 
+    'X-Zomato-API-Key' : '7749b19667964b87a3efc739e254ada2'
+}
 
 
+
+// request({
+//     	headers : {
+//     		'Content-Type' : 'application/json'
+//     	},
+//     	uri : 'http://127.0.0.1:5984/test/87faa29914250597eee456911c001e24',
+//     	method : 'GET'
+//     }, function(err, res, body){
+//     	console.log(body);
+//     	var data = JSON.parse(body).data;
+//     	data.map(function(entry){
+//     		console.log(entry.category_id);
+//     		fetchCategoryArticles(entry.category_id);
+//     	});
+//     });
+
+fetchSubZones = function(cityid){
+	    request({
+	    	headers : z_header,
+	    	uri : "https://api.zomato.com/v2/subzones.json?city_id="+cityid,
+	    	method : 'POST'
+	    }, function(err, res, body){
+	    	console.log(body);
+	    	saveToCouch('http://127.0.0.1:5984/z_subzones/', body);
+	    });
+}(3);
+
+
+fetchZones = function(cityid){
+	    request({
+	    	headers : z_header,
+	    	uri : "https://api.zomato.com/v2/zones.json?city_id="+cityid,
+	    	method : 'POST'
+	    }, function(err, res, body){
+	    	console.log(body);
+	    	saveToCouch('http://127.0.0.1:5984/z_zones/', body);
+	    });
+};
 
 fetchCategories = function(){
 	request.get({ url: url, headers: headers }, function (e, r, body) {
@@ -59,7 +87,8 @@ fetchCategoryArticles = function (id){
 		method : 'GET'
 	}, function(err, res, body){
 		console.log(body);
-		saveToCouch('http://127.0.0.1:5984/test_articles/', body);
+		JSON.parse(body).articles.forEach()
+		// saveToCouch('http://127.0.0.1:5984/test_articles/', body);
 	});	
 }
 
