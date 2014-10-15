@@ -38,7 +38,64 @@ var z_header =
 //     		console.log(entry.category_id);
 //     		fetchCategoryArticles(entry.category_id);
 //     	});
-//     });
+//     });	
+
+
+fetchAllRestaurantsInAllZones = function(){
+	    request({
+	    	headers : couch_header,
+	    	uri : "http://127.0.0.1:5984/z_zones_copy/_design/view/_show/fizz/303b30e5ada45b2c188464ffe10007af",
+	    	method : 'POST'
+	    }, function(err, res, body){
+	    	JSON.parse(body).forEach(function(el){
+	    		console.log(el);
+	    		// fetchRestaurantsInZone(el);
+	    	});
+	    	// saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
+	    });
+};
+
+f = function(){
+		start = start + batch;
+		console.log('start -> ' + start);
+		request({
+		headers : z_header,
+		uri : "https://api.zomato.com/v2/search.json?zone_id="+zoneid+"&start="+start+"&count="+batch,
+		method : 'POST'
+	    }, function(err, res, body){
+	    	console.log(body);
+	    	saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
+	    });
+
+	    if(start > count){
+	    	clearInterval(interval);
+	    }
+}
+
+fetchAllRestaurantsInZone = function(zone_id){
+		zoneid = zone_id;
+		count = 0;
+		start = 0;
+		var param = count>0?"&start="+start:"";
+		batch = 50;
+
+		request({
+	    	headers : z_header,
+	    	uri : "https://api.zomato.com/v2/search.json?zone_id="+zoneid+"&count="+batch,
+	    	method : 'POST'
+	    }, function(err, res, body){
+	    	console.log(body);
+	    	saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
+	    	
+	    	body = JSON.parse(body);
+	    	console.log("results_found --> " + body.results_found);
+
+	    	count = body.results_found;
+	    	
+	    	interval = setInterval(f, 5000);
+	    });
+}(2400);
+
 
 fetchSubZones = function(cityid){
 	    request({
@@ -49,7 +106,7 @@ fetchSubZones = function(cityid){
 	    	console.log(body);
 	    	saveToCouch('http://127.0.0.1:5984/z_subzones/', body);
 	    });
-}(3);
+};
 
 
 fetchZones = function(cityid){
