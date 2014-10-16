@@ -49,15 +49,15 @@ fetchAllRestaurantsInAllZones = function(){
 	    }, function(err, res, body){
 	    	JSON.parse(body).forEach(function(el){
 	    		console.log(el);
-	    		// fetchRestaurantsInZone(el);
+	    		fetchAllRestaurantsInZone(el);
 	    	});
 	    	// saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
 	    });
-};
+}();
 
-f = function(){
+fz = function(){
 		start = start + batch;
-		console.log('start -> ' + start);
+		console.log('start -> ' + start + "/" + count);
 		request({
 		headers : z_header,
 		uri : "https://api.zomato.com/v2/search.json?zone_id="+zoneid+"&start="+start+"&count="+batch,
@@ -73,17 +73,42 @@ f = function(){
 }
 
 fetchAllRestaurantsInZone = function(zone_id){
-		zoneid = zone_id;
-		count = 0;
-		start = 0;
+		var zoneid = zone_id;
+		var count = 0;
+		var start = 0;
 		var param = count>0?"&start="+start:"";
-		batch = 50;
+		var batch = 50;
+		var interval;
+		///////////////
+		var f = function(){
+			start = start + batch;
+			console.log(zone_id + ' == start -> ' + start + "/" + count);
+			request({
+			headers : z_header,
+			uri : "https://api.zomato.com/v2/search.json?zone_id="+zoneid+"&start="+start+"&count="+batch,
+			method : 'POST'
+		    }, function(err, res, body){
+		    	// console.log(body);
+		    	saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
+		    });
 
-		request({
+		    if(start > count){
+		    	clearInterval(interval);
+		    	console.log("finished --> " + start + "/" + count + " for " + zoneid );
+		    }
+		}
+
+
+		//////////////
+		var req_data = {
 	    	headers : z_header,
 	    	uri : "https://api.zomato.com/v2/search.json?zone_id="+zoneid+"&count="+batch,
 	    	method : 'POST'
-	    }, function(err, res, body){
+	    };
+	    
+	    console.log(req_data.uri);
+
+		request(req_data, function(err, res, body){
 	    	console.log(body);
 	    	saveToCouch('http://127.0.0.1:5984/z_restaurants_zone/', body);
 	    	
@@ -94,7 +119,7 @@ fetchAllRestaurantsInZone = function(zone_id){
 	    	
 	    	interval = setInterval(f, 5000);
 	    });
-}(2400);
+};
 
 
 fetchSubZones = function(cityid){
